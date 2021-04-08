@@ -17,4 +17,9 @@ The Tell, Don't Ask (TDA) principle suggests that it is better to issue an objec
 YAGNI 
 "You aren't gonna need it" (YAGNI) is a principle of extreme programming (XP) that states a programmer should not add functionality until deemed necessary.
 
-SOLID
+SOLID Design Principles
+- Single Responsibility Principle
+- Open Closed Principle
+- Liskov's Substitutability Principle
+- Interface Segregation Principle
+- Dependency Inversion Principle
