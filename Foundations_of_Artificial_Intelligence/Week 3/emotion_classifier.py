@@ -13,7 +13,7 @@ Data has been largely preprocessed already, using technique from this paper: htt
 Data dictionary:
 
 - text: string 
-- emotions: class label
+- emotion: string
 """
 
 import warnings
@@ -31,6 +31,8 @@ from tensorflow.keras import losses
 from tensorflow.keras.layers import Dense, TextVectorization, Activation
 from tensorflow.keras.models import Sequential
 
+print("\nGetting ready for you...\n")
+
 """### Load and read the data"""
 
 train_path = "data/emotion_train.txt"
@@ -39,23 +41,15 @@ val_path = "data/emotion_val.txt"
 
 data = pd.read_csv(train_path, sep=";", header=None, names=['text', 'emotion'],
                                engine="python")
-data.emotion.unique()
 
-data.head()
-
-data.count()
-
-# label_encoder object knows how to understand word labels.
+# label_encoder object knows how to understand word labels
 label_encoder = preprocessing.LabelEncoder()
  
 # Encode labels in column 'emotion'.
 data['emotion']= label_encoder.fit_transform(data['emotion'])
- 
-data['emotion'].unique()
 
 text = data.text
 labels = data.emotion
-data.head()
 
 """### Data Split"""
 
@@ -70,21 +64,7 @@ X_train, X_validation, y_train, y_validation = train_test_split(X, labels, test_
 # split the validation sets to get a holdout dataset (for testing) 50-50 split
 X_validation, X_test, y_validation, y_test = train_test_split(X_validation, y_validation, test_size=0.5, random_state = SEED)
 
-print(X_train.shape)
-print(X_validation.shape)
-print(y_train.shape)
-print(y_validation.shape)
-print(X_test.shape)
-print(y_test.shape)
-
 """### Prepare data for training"""
-
-"""
-If you want to apply tf.data transformations to a DataFrame of a uniform dtype, the Dataset.from_tensor_slices method will create a dataset 
-that iterates over the rows of the DataFrame. 
-Each row is initially a vector of values. 
-To train a model, you need (inputs, labels) pairs.
-"""
 
 AUTOTUNE = tf.data.AUTOTUNE
 BATCH_SIZE = 32
@@ -92,11 +72,6 @@ BUFFER_SIZE = 2000
 
 # train dataset
 train_numeric_ds = Dataset.from_tensor_slices((X_train, y_train))
-
-# in tensorflow it is expected that you pass batches. tf.keras models are optimized to make predictions on a batch, or collection, of examples at once. 
-# in this case, batches of (text, emotion) pairs
-# also shuffle the data for training 
-# prefetch overlaps data preprocessing and model execution while training
 train_numeric_ds = train_numeric_ds.batch(BATCH_SIZE).shuffle(BUFFER_SIZE).prefetch(AUTOTUNE)
 
 # val dataset
@@ -106,12 +81,6 @@ val_numeric_ds = val_numeric_ds.batch(BATCH_SIZE).shuffle(BUFFER_SIZE).prefetch(
 # test dataset 
 test_numeric_ds = Dataset.from_tensor_slices((X_test, y_test))
 test_numeric_ds = test_numeric_ds.batch(BATCH_SIZE).shuffle(BUFFER_SIZE).prefetch(AUTOTUNE)
-
-print(train_numeric_ds.element_spec)
-
-for text, emotion in train_numeric_ds.take(1):
-    print("Sentence: ", text.numpy())
-    print("Label:", emotion.numpy())
 
 """### Vectorize"""
 
@@ -127,7 +96,7 @@ def binary_vectorize_text(text, label):
   text = tf.expand_dims(text, -1)
   return binary_vectorize_layer(text), label
 
-# apply the TextVectorization layers you created earlier to the training, validation, and test sets:
+# apply the TextVectorization layers created earlier to the training, validation, and test sets:
 
 binary_train_ds = train_numeric_ds.map(binary_vectorize_text)
 binary_val_ds = val_numeric_ds.map(binary_vectorize_text)
@@ -135,7 +104,9 @@ binary_test_ds = test_numeric_ds.map(binary_vectorize_text)
 
 """### Modelling"""
 
-binary_model = Sequential([Dense(6)]) # param passed is the number of labels + 1
+print("\nBuilding emotion classifier...\n")
+
+binary_model = Sequential([Dense(6)]) 
 
 binary_model.compile(
     loss=losses.SparseCategoricalCrossentropy(from_logits=True),
@@ -143,22 +114,13 @@ binary_model.compile(
     metrics=['accuracy'])
 
 history = binary_model.fit(
-    binary_train_ds, validation_data=binary_val_ds, epochs=10)
-
-print("Linear model on binary vectorized data:")
-print(binary_model.summary())
-
-binary_loss, binary_accuracy = binary_model.evaluate(binary_test_ds)
-
-print("Binary model accuracy: {:2.2%}".format(binary_accuracy))
+    binary_train_ds, validation_data=binary_val_ds, epochs=10, verbose=0)
 
 """### Model Export"""
 
 """
-You applied tf.keras.layers.TextVectorization to the dataset before feeding text to the model. 
-
-To make the model capable of processing raw strings (for example, to simplify deploying it), you include the TextVectorization layer inside the model.
-Create a new model using the weights you have just trained:
+To make the model capable of processing raw strings, the TextVectorization layer was included inside the model.
+A new model using the weights just trained:
 """
 
 export_model = Sequential(
@@ -169,10 +131,6 @@ export_model.compile(
     loss=losses.SparseCategoricalCrossentropy(from_logits=False),
     optimizer='adam',
     metrics=['accuracy'])
-
-# Test it with `test_numeric_ds`, which yields raw strings
-loss, accuracy = export_model.evaluate(test_numeric_ds)
-print("Accuracy: {:2.2%}".format(binary_accuracy))
 
 """
 A function to find the label with the maximum score.
@@ -186,35 +144,37 @@ def get_string_labels(predicted_scores_batch):
 
 """### Run inference on new data"""
 
+print("\nRunning inference...\n")
+
 EMOTIONS = {
-    # anger
+    # anger 
     0: "It sounds like you may be feeling angry. Perhaps going for a walk will give you clarity of mind.", 
-    # fear
+    # fear 
     1: "It sounds like you are feeling afraid. Try to remember this: Fear is a reaction. Courage is a decision.",
-    # joy
+    # joy 
     2: "It sounds like you’re feeling joyful. Congrats!",
-    # love
+    # love 
     3: "It sounds like you are feeling love. How wonderful!",
-    # sadness
+    # sadness 
     4: "It sounds like you are feeling blue. Try to remember this: we cannot cure the world of sorrows but we can choose to live in joy.", 
     # surprise
     5: "It sounds like you’re feeling…surprised!" 
 }
 
 """
-Now, the model can take raw strings as input and predict a score for each label using Model.predict. 
+The model can take raw strings as input and predict a score for each label using Model.predict. 
 """
 
 inputs = [
-    "i can't escape the tears after the loss of my pet", 
-    "i am ever feeling nostalgic about the house"
+    "I can't escape the tears after the loss of my pet", 
+    "I am ever feeling nostalgic about her",
+    "I felt heartbroken after I found out",
+    "I felt invaded and helpless in that situation",
+    "I've been feeling grumpy in the past hour",
+    "I feel dazed and confused by everything that happened"
 ]
 predicted_scores = export_model.predict(inputs)
 predicted_labels = get_string_labels(predicted_scores)
 for input, label in zip(inputs, predicted_labels):
-  print("User text: ", input)
-  print("Predicted label: ", EMOTIONS[label.numpy()])
-
-if __name__ == "__main__" : 
-    #get_user_input()
-    print("it ran.")
+  print("\nUser text: ", input)
+  print("Predicted feeling: ", EMOTIONS[label.numpy()])
