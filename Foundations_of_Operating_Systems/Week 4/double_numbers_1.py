@@ -13,7 +13,7 @@ f = num_file.read()
 # then process each row 
 f = f.split('\n')
 for num in f:
-    if (num != ''):
+    if not num:
         num = num.strip()
         doubled = int(num) * 2
         new_file_2.write("% s\n" % (doubled))
