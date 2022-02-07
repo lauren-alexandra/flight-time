@@ -1,3 +1,5 @@
+print("\nGetting assessment ready...\n")
+
 import sys
 
 if not sys.warnoptions:
@@ -47,7 +49,7 @@ symptom_questionnaire = [
                      '(20/20) Do you have pink eye? '
                     ]
 
-print("Please answer all questions. Enter 'Y' for Yes and 'N' for No.\n")
+print("\nPlease answer all questions. Enter 'Y' for Yes and 'N' for No.\n")
 
 for question in symptom_questionnaire: 
     res = input(question)
@@ -150,15 +152,15 @@ model = Sequential([
                     Dense(4, activation="softmax") # 4 neurons, 1 per class
                   ]) 
 
+print("\nMaking recommendations...\n")
+
 model.compile(
     loss=losses.SparseCategoricalCrossentropy(from_logits=True),
     optimizer='sgd',
     metrics=['accuracy'])
 
 history = model.fit(
-    train_numeric_ds, validation_data=val_numeric_ds, epochs=10)
-
-model_loss, model_accuracy = model.evaluate(test_numeric_ds)
+    train_numeric_ds, validation_data=val_numeric_ds, epochs=10, verbose=0)
 
 """ Run inference """
 
