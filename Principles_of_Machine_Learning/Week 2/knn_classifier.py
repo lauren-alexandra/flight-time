@@ -25,8 +25,6 @@ def main():
 
         return received
 
-    iris = get_input()
-
     # load file
     def load_csv(filename):
         data = list()
@@ -37,8 +35,6 @@ def main():
                     continue
                 data.append(row)
         return data
- 
-    data = load_csv(filename)
 
     def prepare_data(data):
         # remove column headings - 'SepalLength', 'SepalWidth', 'PetalLength', 'PetalWidth', 'Name'
@@ -61,8 +57,6 @@ def main():
             row[class_col] = class_dict[row[class_col]]
 
         return data, class_dict
-
-    data, class_lookup = prepare_data(data) 
 
     # calculate the distance between test data and each row of training data
     def get_distance(instance, row):
@@ -90,17 +84,12 @@ def main():
             neighbors.append(distances[i][0]) # append the row data in distances to neighbors 
 
         return neighbors
-
-    def predict_classification(train, instance, k_neighbors):
+    
+    def knn_classifier(train, instance, k_neighbors):
         neighbors = get_neighbors(train, instance, k_neighbors)
         class_values = [row[-1] for row in neighbors]
         # find the highest count of occurrences of each value in class_values 
-        prediction = max(set(class_values), key=class_values.count)
-        return prediction
-    
-    # KNN
-    def k_nearest_neighbors(train, instance, k_neighbors):
-        classification = predict_classification(train, instance, k_neighbors)
+        classification = max(set(class_values), key=class_values.count)
 
         # get class name
         idx = list(class_lookup.values()).index(classification)
@@ -109,9 +98,10 @@ def main():
 
         return class_name 
 
-    train_set = data[1:]
-    predicted_class = k_nearest_neighbors(train_set, iris, k)
-
+    iris = get_input()
+    data = load_csv(filename)
+    data, class_lookup = prepare_data(data) 
+    predicted_class = knn_classifier(data, iris, k)
     print("\nPrediction: ", predicted_class)
 
     time.sleep(3)
