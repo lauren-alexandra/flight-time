@@ -1,25 +1,33 @@
-import nlpaug
 import nlpaug.augmenter.word as naw
-import transformers
-import torch
 
-with open('emotion_sentences.txt') as f:
+data_path = input('Enter the complete path of your dataset: ')
+data_path = data_path.strip()
+
+with open(data_path) as f:
     lines = f.readlines()
+    clean_text = [sent.strip() for sent in lines]
 
-clean_text = lines[0:3]
-clean_text = [sent.strip() for sent in clean_text]
+    # initialize new dataset
+    aug_file = open("aug_data.txt", "a")
+    aug_file.write(''.join(lines))
 
-TOPK=20 #default=100
-ACT = 'insert' #"substitute"
+    """
+    - ContextualWordEmbsAug is an augmenter that applys operation (word level) to textual input based on contextual word embeddings.
+    - DistilBERT is a transformers model, smaller and faster than BERT, which was pretrained on the same corpus in a self-supervised fashion, 
+      using the BERT base model as a teacher. Uncased: it does not make a difference between english and English.
+    - action: a new word will be injected to random position according to contextual word embeddings calculation
+    - top_k: controlling lucky draw pool
+    """
+    aug_bert = naw.ContextualWordEmbsAug(
+        model_path='distilbert-base-uncased', 
+        action='insert', top_k=20)
 
-aug_bert = naw.ContextualWordEmbsAug(
-    model_path='distilbert-base-uncased', 
-    action=ACT, top_k=TOPK)
+    print("Augmenting data...")
+    for line in clean_text: 
+        try: 
+            aug_text = aug_bert.augment(line)
+            aug_file.write(''.join(aug_text + '\n'))
+        except UnicodeEncodeError as e:
+            continue
 
-print("Original:")
-print(clean_text)
-
-print("Augmented Text:")
-for i in range(3):
-    augmented_text = aug_bert.augment(clean_text)
-    print(augmented_text)
+    aug_file.close()
