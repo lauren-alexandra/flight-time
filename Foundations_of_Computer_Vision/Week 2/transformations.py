@@ -18,28 +18,33 @@ if img is None:
 height, width = img.shape[:2]
 # img.shape = (83, 125, 3)
 
-# scale image
+""" Scale """
 
 resized_img = cv.resize(img,(5*width, 5*height), interpolation = cv.INTER_CUBIC)
 # resized_img.shape = (415, 625, 3)
 cv.imwrite("banknotes.png", resized_img)
 
-# rotate image and adjust color
+""" Rotate and adjust color """
 
-markings = resized_img[100:500, 20:300]
-rows, cols, clrs = markings.shape
+features = resized_img[100:500, 20:300]
+rows, cols, clrs = features.shape
+
+# the center coordinates of the image
 # cols-1 and rows-1 are the coordinate limits
-# the transformation matrix. rotates the image by 270 degree angle.
-M = cv.getRotationMatrix2D(((cols-1)/2.0, (rows-1)/2.0), 270, 1)
+center = ((cols-1)/2.0, (rows-1)/2.0)
+
+# the transformation matrix
+rotate_matrix = cv.getRotationMatrix2D(center=center, angle=270, scale=1)
 """
 [[-1.8369702e-16 -1.0000000e+00  2.9650000e+02]
  [ 1.0000000e+00 -1.8369702e-16  1.7500000e+01]]
 """
-markings = cv.warpAffine(markings, M, (cols,rows))
-# B,G,R
-markings[:, :, 0] = 0 # set all blue pixels to zero to highlight the bell in the inkwell and color-shifting 100
-cv.imwrite("markings.png", markings)
 
-cv.imshow('Display window', markings)
+features = cv.warpAffine(src=features, M=rotate_matrix, dsize=(cols,rows))
 
+# set all blue pixels to zero to highlight the bell in the inkwell and color-shifting 100
+features[:, :, 0] = 0 
+
+cv.imwrite("features.png", features)
+cv.imshow('Display window', features)
 k = cv.waitKey(0)
