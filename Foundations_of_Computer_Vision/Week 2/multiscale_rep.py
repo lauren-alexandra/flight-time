@@ -31,10 +31,21 @@ cv.imwrite("puppy_B.png", b)
 cv.imwrite("puppy_G.png", g)
 cv.imwrite("puppy_R.png", r)
 
+cv.imshow('Blue channel', b)
+k = cv.waitKey(3000)
+cv.imshow('Green channel', g)
+k = cv.waitKey(3000)
+cv.imshow('Red channel', r)
+k = cv.waitKey(3000)
+
 # merge images back into a colored 3D image
 BGR_img = cv.merge((b,g,r))
 cv.imwrite("puppy_BGR.png", BGR_img)
+cv.imshow('BGR image', BGR_img)
+k = cv.waitKey(3000)
 
 # swap out the red channel with the green channel (GRB)
 GRB_img = cv.merge((g,r,b))
 cv.imwrite("puppy_GRB.png", GRB_img)
+cv.imshow('GRB image', GRB_img)
+k = cv.waitKey(3000)
