@@ -1,64 +1,43 @@
 """
-Description: The program finds the smallest edit distance between any two words. 
-A letter may be copied at the cost of 5, deleted at the cost of 20, or inserted
-at the cost of 20.
+Description: An algorithm that gives you the smallest edit distance between any two words.
 """
-
-from collections import Counter
 
 def main():
 
-    def edit_dist(str1, str2):
-        word1_len, word2_len = len(str1), len(str2)
-        goal_word = Counter(str2)
-        memo = {"total": 0}
+    memo = dict()
 
-        def checkCopy(letter):
-            if goal_word[letter] != 0: return 25
-            else: return 50 # negates the copy value in min
-
-        def find_cost(i): # i is the index of a subproblem 
-            combined_op_cost = 40 # insert new 20, del old 20
-            highest_op_cost = 20
-
-            # Base case: (i == word1_len or i == word2_len) 
-            if i == word1_len or i == word2_len:
-                diff = word1_len - word2_len
-                remaining = abs(diff) * highest_op_cost 
-                memo['total'] = memo['total'] + remaining       
-                return None
-
-            # edge case: str1 empty
-            if word1_len == 0: 
-                memo['total'] = len(str2) * highest_op_cost
-                return None
-
-            # General case: (0 <= i < word1_len and 0 <= i < word2_len)
-            letter = str1[i]
-            # check if same letter at same index
-            if (letter == str2[i]): 
-                return find_cost(i+1)
-            elif letter in memo.keys(): 
-                memo['total'] = memo['total'] + memo[letter]
-            else:          
-                min_edit = min(checkCopy(letter), combined_op_cost) 
-                # store the result of subproblem in memo dictionary 
-                memo[letter] = min_edit
-                memo['total'] = memo['total'] + min_edit
-
-            return find_cost(i+1) 
+    def find_edit_dist(word1, word2, word1_len, word2_len):
+    
+        # Base cases
+        # if first word is empty, need to insert all letters from second word
+        if word1_len == 0:
+            return word2_len
+    
+        # if second word is empty, need to insert all letters from first word
+        if word2_len == 0:
+            return word1_len
+    
+        # use cached solution to a subproblem
+        key = word1_len, word2_len
+        if key in memo: return memo[key]
             
-        # Goal: find cost
-        find_cost(0)
-        
-        print(f"\nTotal cost: {memo['total']}")
-        return memo['total']
+        # if letters the same, continue to find the remaining edits
+        if word1[word1_len - 1] == word2[word2_len - 1]:
+            return find_edit_dist(word1, word2, word1_len - 1, word2_len - 1)
+
+        # General case
+        # take the minimum of the min cost for insert, delete, and copy operations 
+        # store the result of subproblem in memo dictionary 
+        memo[key] = 1 + min(find_edit_dist(word1, word2, word1_len, word2_len - 1), # insertion
+                            find_edit_dist(word1, word2, word1_len - 1, word2_len), # deletion
+                            find_edit_dist(word1, word2, word1_len - 1, word2_len - 1)) # copy
+        return memo[key]
 
     words = input("\nPlease enter two words separated by a comma: ")
     words = words.split(',')
     words = [word.strip() for word in words]
-    edit_dist(words[0], words[1])
-
+    w1, w2 = words[0], words[1]
+    print(f"\nEdit distance: {find_edit_dist(w1, w2, len(w1), len(w2))}")
 
 if __name__ == "__main__":
     main()
