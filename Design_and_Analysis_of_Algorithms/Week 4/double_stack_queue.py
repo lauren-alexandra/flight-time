@@ -17,8 +17,7 @@ class DoubleStackQueue:
 
     def dequeue(self):
         while(len(self.current) > 1):
-            popped = self.current.pop()
-            self.temp.append(popped)
+            self.temp.append(self.current.pop())
 
         dq_elem = self.current.pop()
         self.removed.append(dq_elem) # for status
