@@ -1,2 +1,2 @@
 # flight-time
-Graduate work & notes at Colorado State University
+Graduate work and notes
