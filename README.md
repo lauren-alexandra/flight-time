@@ -1,2 +1,2 @@
 # flight-time
-Graduate work and notes
+Graduate work
