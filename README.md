@@ -1,3 +1,2 @@
 # flight-time
-Graduate work 
-Colorado State University
+Colorado State University graduate work
